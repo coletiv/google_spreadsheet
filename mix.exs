@@ -4,7 +4,7 @@ defmodule GoogleSpreadsheet.MixProject do
   def project do
     [
       app: :google_spreadsheet,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.7",
       description: "Elixir package to work with Google (Drive) Sheets",
       docs: [extras: ["README.md"]],
