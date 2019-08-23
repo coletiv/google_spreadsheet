@@ -97,7 +97,7 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{status_code: 400, body: _body}} ->
+      {:ok, %HTTPoison.Response{status_code: 400}} ->
         {:error, "Invalid title"}
 
       _ ->
