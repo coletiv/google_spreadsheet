@@ -1,0 +1,7 @@
+_build
+deps
+config/*.json
+doc
+config/*.local.exs
+.editorconfig
+.elixir_ls
