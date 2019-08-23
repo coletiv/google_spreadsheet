@@ -97,7 +97,8 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      _ ->
+      error ->
+        IO.inspect(error)
         {:error, "Unauthenticated / Unauthorized"}
     end
   end
