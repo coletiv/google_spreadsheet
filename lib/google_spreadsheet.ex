@@ -5,12 +5,44 @@ defmodule GoogleSpreadsheet do
 
   alias Goth.Token
 
-  @auth_scope "https://www.googleapis.com/auth/spreadsheets"
+  @auth_scope "https://www.googleapis.com/auth/drive"
+  @api_url_file_permissions "https://www.googleapis.com/drive/v3/files"
   @api_url_spreadsheet "https://sheets.googleapis.com/v4/spreadsheets"
   @json_accept {"Accept", "application/json"}
-  @json_content_type {"Accept", "application/json"}
+  @json_content_type {"Content-Type", "application/json"}
   @user_agent {"User-Agent",
                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:61.0) Gecko/20100101 Firefox/61.0"}
+
+  @doc """
+  Add email to file (spreadsheet_id) as a writer
+  """
+  def add_writer_permissions_to_spreadsheet(spreadsheet_id, email) do
+    body =
+      Poison.encode!(%{
+        "role" => "writer",
+        "type" => "user",
+        "emailAddress" => email
+      })
+
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.post(
+             "#{@api_url_file_permissions}/#{spreadsheet_id}/permissions",
+             body,
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      decoded_body
+    else
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
 
   @doc """
   Get last worksheet from spreadsheet (use spreadsheet_id)
@@ -35,6 +67,10 @@ defmodule GoogleSpreadsheet do
           |> List.first()
       end
     else
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
+
       _ ->
         {:error, "Unauthenticated / Unauthorized"}
     end
@@ -61,6 +97,10 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
+
       _ ->
         {:error, "Unauthenticated / Unauthorized"}
     end
@@ -97,8 +137,155 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{status_code: 400}} ->
-        {:error, "Invalid title"}
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
+
+  @doc """
+  function for rewrite row between columns
+  """
+  def rewrite_row(
+        spreadsheet_id,
+        worksheet_title,
+        row \\ 1,
+        column_start,
+        column_end,
+        values
+      ) do
+    body =
+      Poison.encode!(%{
+        "data" => [
+          %{
+            "values" => [values],
+            "major_dimension" => "ROWS",
+            "range" => "#{worksheet_title}!#{column_start}#{row}:#{column_end}#{row}"
+          }
+        ],
+        "includeValuesInResponse" => false,
+        "valueInputOption" => "USER_ENTERED"
+      })
+
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.post(
+             "#{@api_url_spreadsheet}/#{spreadsheet_id}/values:batchUpdate",
+             body,
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      decoded_body
+    else
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
+
+  @doc """
+    function for append row between columns
+  """
+  def append_row(
+        spreadsheet_id,
+        worksheet_title,
+        column_start,
+        column_end,
+        values
+      ) do
+    body =
+      Poison.encode!(%{
+        "values" => [values],
+        "major_dimension" => "ROWS"
+      })
+
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.post(
+             "#{@api_url_spreadsheet}/#{spreadsheet_id}/values/#{worksheet_title}!#{column_start}#{
+               1
+             }:#{column_end}#{1}:append?value_input_option=USER_ENTERED&include_values_in_response=false&insert_data_option=INSERT_ROWS",
+             body,
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      decoded_body
+    else
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
+
+  @doc """
+  Get all rows until find a empty row between columns (start and end)
+  """
+  def get_rows_until_empty(
+        spreadsheet_id,
+        worksheet_title,
+        row_start \\ 1,
+        column_start \\ "A",
+        column_end \\ "Z",
+        accumulated_rows \\ []
+      ) do
+    # get next row
+    case get_row(spreadsheet_id, worksheet_title, row_start, column_start, column_end) do
+      {:error, _reason} ->
+        []
+
+      # no more row to fetch
+      [] ->
+        accumulated_rows
+
+      row_values ->
+        row = [%{"row" => row_start, "values" => row_values}]
+
+        get_rows_until_empty(
+          spreadsheet_id,
+          worksheet_title,
+          row_start + 1,
+          column_start,
+          column_end,
+          accumulated_rows ++ row
+        )
+    end
+  end
+
+  @doc """
+  Get row between columns (start and end)
+  """
+  def get_row(spreadsheet_id, worksheet_title, row, column_start, column_end) do
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.get(
+             "#{@api_url_spreadsheet}/#{spreadsheet_id}/values/#{worksheet_title}!#{column_start}#{
+               row
+             }:#{column_end}#{row}",
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      with %{"values" => values} <- decoded_body do
+        List.flatten(values)
+      else
+        _ ->
+          []
+      end
+    else
+      {:ok, %HTTPoison.Response{} = ff} ->
+        IO.inspect(ff, label: "ff")
+        {:error, "Invalid request"}
 
       _ ->
         {:error, "Unauthenticated / Unauthorized"}
