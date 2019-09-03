@@ -10,7 +10,7 @@ by adding `google_spreadsheet` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:google_spreadsheet, "~> 0.1.0"}
+    {:google_spreadsheet, "~> 1.0.0"}
   ]
 end
 ```

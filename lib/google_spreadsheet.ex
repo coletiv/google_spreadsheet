@@ -5,7 +5,8 @@ defmodule GoogleSpreadsheet do
 
   alias Goth.Token
 
-  @auth_scope "https://www.googleapis.com/auth/drive"
+  @auth_drive_scope "https://www.googleapis.com/auth/drive"
+  @auth_spreadsheets_scope "https://www.googleapis.com/auth/spreadsheets"
   @api_url_file_permissions "https://www.googleapis.com/drive/v3/files"
   @api_url_spreadsheet "https://sheets.googleapis.com/v4/spreadsheets"
   @json_accept {"Accept", "application/json"}
@@ -24,7 +25,7 @@ defmodule GoogleSpreadsheet do
         "emailAddress" => email
       })
 
-    with {:ok, authorization_token} <- get_token(),
+    with {:ok, authorization_token} <- get_token(@auth_drive_scope),
          {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
            HTTPoison.post(
              "#{@api_url_file_permissions}/#{spreadsheet_id}/permissions",
@@ -293,9 +294,8 @@ defmodule GoogleSpreadsheet do
   end
 
   # get google auth token
-  defp get_token() do
-    with {:ok, %Token{type: type, token: token, expires: _expires}} <-
-           Token.for_scope(@auth_scope) do
+  defp get_token(scope \\ @auth_spreadsheets_scope) do
+    with {:ok, %Token{type: type, token: token, expires: _expires}} <- Token.for_scope(scope) do
       {:ok, {"authorization", "#{type} #{token}"}}
     else
       _ ->
