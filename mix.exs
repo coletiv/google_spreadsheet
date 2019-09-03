@@ -46,9 +46,9 @@ defmodule GoogleSpreadsheet.MixProject do
       {:httpoison, "~> 1.5.1"},
       {:gen_stage, "~> 0.14"},
       # Handle JSON
-      {:poison, "~> 3.1.0"},
-      {:earmark, ">= 0.0.0", only: :dev},
-      {:ex_doc, "~> 0.19", only: :dev},
+      {:poison, "~> 4.0.1"},
+      {:earmark, "~> 1.3.6", only: :dev},
+      {:ex_doc, "~> 0.21.2", only: :dev},
       {:logger_file_backend, ">= 0.0.10", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       # blankable
