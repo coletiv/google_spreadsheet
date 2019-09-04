@@ -36,8 +36,7 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
@@ -68,8 +67,7 @@ defmodule GoogleSpreadsheet do
           |> List.first()
       end
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
@@ -98,8 +96,7 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
@@ -138,8 +135,7 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
@@ -182,8 +178,7 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
@@ -220,8 +215,7 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       decoded_body
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
@@ -284,8 +278,7 @@ defmodule GoogleSpreadsheet do
           []
       end
     else
-      {:ok, %HTTPoison.Response{} = ff} ->
-        IO.inspect(ff, label: "ff")
+      {:ok, %HTTPoison.Response{}} ->
         {:error, "Invalid request"}
 
       _ ->
