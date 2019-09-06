@@ -10,6 +10,14 @@ defmodule GoogleSpreadsheetTest do
     # %{"sheetId" => worksheet_id, "title" => worksheet_title} =
     #   GoogleSpreadsheet.get_last_worksheet(spreadsheet_id)
 
+    # GoogleSpreadsheet.append_rows(
+    #   spreadsheet_id,
+    #   worksheet_title,
+    #   "A",
+    #   "E",
+    #   [[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]
+    # )
+
     # IO.inspect(worksheet_id, label: "worksheet_id")
     # IO.inspect(worksheet_title, label: "worksheet_title")
 

@@ -268,6 +268,43 @@ defmodule GoogleSpreadsheet do
   end
 
   @doc """
+    function for append rows between columns
+  """
+  def append_rows(
+        spreadsheet_id,
+        worksheet_title,
+        column_start,
+        column_end,
+        values
+      ) do
+    body =
+      Poison.encode!(%{
+        "values" => values,
+        "major_dimension" => "ROWS"
+      })
+
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.post(
+             "#{@api_url_spreadsheet}/#{spreadsheet_id}/values/#{worksheet_title}!#{column_start}#{
+               1
+             }:#{column_end}#{1}:append?value_input_option=USER_ENTERED&include_values_in_response=false&insert_data_option=INSERT_ROWS",
+             body,
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      decoded_body
+    else
+      {:ok, %HTTPoison.Response{}} ->
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
+
+  @doc """
   Get row between columns (start and end)
   """
   def get_row(spreadsheet_id, worksheet_title, row, column_start, column_end) do
