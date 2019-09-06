@@ -187,6 +187,50 @@ defmodule GoogleSpreadsheet do
   end
 
   @doc """
+  function for rewrite rows between columns
+  """
+  def rewrite_rows(
+        spreadsheet_id,
+        worksheet_title,
+        row_start,
+        row_end,
+        column_start,
+        column_end,
+        values
+      ) do
+    body =
+      Poison.encode!(%{
+        "data" => [
+          %{
+            "values" => values,
+            "major_dimension" => "ROWS",
+            "range" => "#{worksheet_title}!#{column_start}#{row_start}:#{column_end}#{row_end}"
+          }
+        ],
+        "includeValuesInResponse" => false,
+        "valueInputOption" => "USER_ENTERED"
+      })
+
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.post(
+             "#{@api_url_spreadsheet}/#{spreadsheet_id}/values:batchUpdate",
+             body,
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      decoded_body
+    else
+      {:ok, %HTTPoison.Response{}} ->
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
+
+  @doc """
     function for append row between columns
   """
   def append_row(
