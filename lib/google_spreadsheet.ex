@@ -224,40 +224,6 @@ defmodule GoogleSpreadsheet do
   end
 
   @doc """
-  Get all rows until find a empty row between columns (start and end)
-  """
-  def get_rows_until_empty(
-        spreadsheet_id,
-        worksheet_title,
-        row_start \\ 1,
-        column_start \\ "A",
-        column_end \\ "Z",
-        accumulated_rows \\ []
-      ) do
-    # get next row
-    case get_row(spreadsheet_id, worksheet_title, row_start, column_start, column_end) do
-      {:error, _reason} ->
-        []
-
-      # no more row to fetch
-      [] ->
-        accumulated_rows
-
-      row_values ->
-        row = [%{"row" => row_start, "values" => row_values}]
-
-        get_rows_until_empty(
-          spreadsheet_id,
-          worksheet_title,
-          row_start + 1,
-          column_start,
-          column_end,
-          accumulated_rows ++ row
-        )
-    end
-  end
-
-  @doc """
   Get row between columns (start and end)
   """
   def get_row(spreadsheet_id, worksheet_title, row, column_start, column_end) do
@@ -273,6 +239,37 @@ defmodule GoogleSpreadsheet do
          {:ok, decoded_body} <- Poison.decode(body) do
       with %{"values" => values} <- decoded_body do
         List.flatten(values)
+      else
+        _ ->
+          []
+      end
+    else
+      {:ok, %HTTPoison.Response{}} ->
+        {:error, "Invalid request"}
+
+      _ ->
+        {:error, "Unauthenticated / Unauthorized"}
+    end
+  end
+
+  @doc """
+  Get rows (start and end) between columns (start and end)
+  """
+  def get_rows(spreadsheet_id, worksheet_title, row_start, row_end, column_start, column_end) do
+    with {:ok, authorization_token} <- get_token(),
+         {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
+           HTTPoison.get(
+             "#{@api_url_spreadsheet}/#{spreadsheet_id}/values/#{worksheet_title}!#{column_start}#{
+               row_start
+             }:#{column_end}#{row_end}",
+             [@json_content_type, @json_accept, @user_agent, authorization_token],
+             recv_timeout: 10_000
+           ),
+         {:ok, decoded_body} <- Poison.decode(body) do
+      with %{"values" => values} <- decoded_body do
+        values
+        |> Enum.with_index(row_start)
+        |> Enum.map(fn {values, row} -> %{"row" => row, "values" => values} end)
       else
         _ ->
           []
